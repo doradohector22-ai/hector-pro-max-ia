@@ -58,7 +58,7 @@ jobs:
         run: |
           cd ${{ env.PROJECT_DIR }}/android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx4g"
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
