@@ -36,11 +36,29 @@ jobs:
           cd ${{ env.PROJECT_DIR }}
           npm install --legacy-peer-deps
 
+      - name: Fix React Native Gradle Plugin Path
+        run: |
+          cd ${{ env.PROJECT_DIR }}/android
+          node -e "
+          const fs = require('fs');
+          if (fs.existsSync('settings.gradle')) {
+            let content = fs.readFileSync('settings.gradle', 'utf8');
+            content = content.replace(/includeBuild\([\s\S]*?@react-native\/gradle-plugin[\s\S]*?getParentFile\(\)\)/g, 'includeBuild(\"../node_modules/@react-native/gradle-plugin\")');
+            fs.writeFileSync('settings.gradle', content);
+            console.log('¡Archivo settings.gradle emparchado con exito!');
+          }
+          "
+
+      - name: Diagnostics (Check Plugin)
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          ls -la node_modules/@react-native/gradle-plugin || echo 'ALERTA: No se encontro el plugin en node_modules'
+
       - name: Build Android App
         run: |
           cd ${{ env.PROJECT_DIR }}/android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
