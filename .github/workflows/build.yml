@@ -1,0 +1,49 @@
+name: Build Android APK
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          unzip pocketpal-ai.zip
+          if [ -d "pocketpal-ai" ]; then
+            echo "PROJECT_DIR=pocketpal-ai" >> $GITHUB_ENV
+          else
+            echo "PROJECT_DIR=." >> $GITHUB_ENV
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.PROJECT_DIR }}
+          npm install --legacy-peer-deps
+
+      - name: Build Android App
+        run: |
+          cd ${{ env.PROJECT_DIR }}/android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hector-Pro-Max-IA
+          path: ${{ env.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
