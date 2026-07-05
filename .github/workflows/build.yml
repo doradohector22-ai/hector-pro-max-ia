@@ -36,28 +36,24 @@ jobs:
           cd ${{ env.PROJECT_DIR }}
           npm install --legacy-peer-deps
 
-      - name: Force Gradle 8.8 and Clean Settings
+      - name: Force Gradle 8.8 and Patch Settings Correctly
         run: |
           cd ${{ env.PROJECT_DIR }}/android
           
-          # 1. Forzar la version 8.8 en el wrapper
+          # 1. Forzar la version 8.8 en el wrapper y limpiar firmas viejas
           if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
             sed -i 's/gradle-9.0.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
             sed -i 's/gradle-9.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
             sed -i '/distributionSha256Sum/d' gradle/wrapper/gradle-wrapper.properties
           fi
           
-          # 2. Recrear el archivo settings.gradle desde cero con la ruta exacta del servidor
-          echo "pluginManagement {" > settings.gradle
-          echo "    includeBuild(\"${GITHUB_WORKSPACE}/${{ env.PROJECT_DIR }}/node_modules/@react-native/gradle-plugin\")" >> settings.gradle
-          echo "}" >> settings.gradle
-          echo "plugins {" >> settings.gradle
-          echo "    id(\"com.facebook.react.settings\")" >> settings.gradle
-          echo "}" >> settings.gradle
-          echo "rootProject.name = 'PocketPal'" >> settings.gradle
-          echo "include ':app'" >> settings.gradle
-          
-          echo "¡Archivo settings.gradle creado de cero con exito!"
+          # 2. Modificar el settings.gradle original manteniendo sus repositorios intactos
+          # Reemplazamos la linea de includeBuild conflictiva por la ruta absoluta real del servidor
+          if [ -f "settings.gradle" ]; then
+            REAL_PATH="${GITHUB_WORKSPACE}/${{ env.PROJECT_DIR }}/node_modules/@react-native/gradle-plugin"
+            sed -i "s|includeBuild(.*@react-native/gradle-plugin.*)|includeBuild('${REAL_PATH}')|g" settings.gradle
+            echo "¡Archivo settings.gradle original modificado con exito!"
+          fi
 
       - name: Build Android App
         run: |
@@ -70,3 +66,4 @@ jobs:
         with:
           name: Hector-PocketPal-Propio
           path: ${{ env.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
+
