@@ -36,21 +36,13 @@ jobs:
           cd ${{ env.PROJECT_DIR }}
           npm install --legacy-peer-deps
 
-      - name: Fix React Native Gradle Plugin Path
+      - name: Fix React Native Gradle Plugin Path (Direct Method)
         run: |
           cd ${{ env.PROJECT_DIR }}/android
-          node -e "
-          const fs = require('fs');
-          if (fs.existsSync('settings.gradle')) {
-            let content = fs.readFileSync('settings.gradle', 'utf8');
-            // Modificado para usar la ruta absoluta exacta del proyecto descomprimido
-            const projectDir = process.env.PROJECT_DIR;
-            const targetPath = \`\${process.cwd()}/../node_modules/@react-native/gradle-plugin\`;
-            content = content.replace(/includeBuild\([\s\S]*?@react-native\/gradle-plugin[\s\S]*?getParentFile\(\)\)/g, \`includeBuild("\${targetPath}")\`);
-            fs.writeFileSync('settings.gradle', content);
-            console.log('¡Settings.gradle emparchado con ruta exacta!');
-          }
-          "
+          # Borramos la linea conflictiva original y le inyectamos la ruta absoluta real
+          REAL_PATH="${GITHUB_WORKSPACE}/${{ env.PROJECT_DIR }}/node_modules/@react-native/gradle-plugin"
+          sed -i "s|includeBuild(.*@react-native/gradle-plugin.*)|includeBuild('${REAL_PATH}')|g" settings.gradle
+          echo "¡settings.gradle reescrito a la fuerza con la ruta real!"
 
       - name: Force Downgrade to Gradle 8.8 and Fix Checksum
         run: |
