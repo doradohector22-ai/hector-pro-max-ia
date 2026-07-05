@@ -69,4 +69,3 @@ jobs:
         with:
           name: Hector-PocketPal-Fixed
           path: ${{ env.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
-
