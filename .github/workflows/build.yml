@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Official Setup)
 on:
   push:
     branches: [ "main" ]
@@ -25,36 +25,20 @@ jobs:
         with:
           node-version: 18
 
-      - name: Setup Java JDK 17
+      # Ponemos el motor real: Java 22 requerido por Gradle 9
+      - name: Setup Java JDK 22
         uses: actions/setup-java@v4
         with:
-          java-version: 17
-          distribution: 'zulu'
+          java-version: '22'
+          distribution: 'oracle'
 
+      # Instalamos las dependencias primero para que exista la carpeta node_modules
       - name: Install dependencies
         run: |
           cd ${{ env.PROJECT_DIR }}
           npm install --legacy-peer-deps
 
-      - name: Force Gradle 8.8 and Patch Settings Correctly
-        run: |
-          cd ${{ env.PROJECT_DIR }}/android
-          
-          # 1. Forzar la version 8.8 en el wrapper y limpiar firmas viejas
-          if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
-            sed -i 's/gradle-9.0.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
-            sed -i 's/gradle-9.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
-            sed -i '/distributionSha256Sum/d' gradle/wrapper/gradle-wrapper.properties
-          fi
-          
-          # 2. Modificar el settings.gradle original manteniendo sus repositorios intactos
-          # Reemplazamos la linea de includeBuild conflictiva por la ruta absoluta real del servidor
-          if [ -f "settings.gradle" ]; then
-            REAL_PATH="${GITHUB_WORKSPACE}/${{ env.PROJECT_DIR }}/node_modules/@react-native/gradle-plugin"
-            sed -i "s|includeBuild(.*@react-native/gradle-plugin.*)|includeBuild('${REAL_PATH}')|g" settings.gradle
-            echo "¡Archivo settings.gradle original modificado con exito!"
-          fi
-
+      # Compilacion directa usando las herramientas originales del creador, sin parches
       - name: Build Android App
         run: |
           cd ${{ env.PROJECT_DIR }}/android
@@ -66,4 +50,3 @@ jobs:
         with:
           name: Hector-PocketPal-Propio
           path: ${{ env.PROJECT_DIR }}/android/app/build/outputs/apk/debug/app-debug.apk
-
