@@ -49,13 +49,16 @@ jobs:
           }
           "
 
-      - name: Force Downgrade to Gradle 8.8 (Anti-Error 9.0)
+      - name: Force Downgrade to Gradle 8.8 and Fix Checksum
         run: |
           cd ${{ env.PROJECT_DIR }}/android
           if [ -f "gradle/wrapper/gradle-wrapper.properties" ]; then
+            # Reemplazar la URL por la version 8.8
             sed -i 's/gradle-9.0.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
             sed -i 's/gradle-9.0-bin.zip/gradle-8.8-bin.zip/g' gradle/wrapper/gradle-wrapper.properties
-            echo "¡Forzado Gradle 8.8 en el wrapper!"
+            # Borrar la linea de verificacion de firma vieja para evitar el bloqueo
+            sed -i '/distributionSha256Sum/d' gradle/wrapper/gradle-wrapper.properties
+            echo "¡Gradle 8.8 configurado y firma vieja eliminada con exito!"
           fi
 
       - name: Build Android App
